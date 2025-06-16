@@ -1,0 +1,136 @@
+import random
+
+class Palabra:
+    """
+    Representa la palabra secreta que el jugador debe adivinar.
+
+    Atributos:
+        palabra (str): La palabra secreta.
+        letras_adivinadas (list): Una lista de las letras que el jugador ha adivinado correctamente.
+    """
+
+    def __init__(self, palabra):
+        """
+        Inicializa una nueva palabra secreta.
+
+        Args:
+            palabra (str): La palabra a adivinar.
+        """
+        self.palabra = palabra.lower()
+        self.letras_adivinadas = []
+
+    def mostrar_palabra(self):
+        """
+        Muestra el estado actual de la palabra con letras adivinadas y guiones bajos.
+
+        Returns:
+            str: Una cadena que representa la palabra con las letras adivinadas.
+        """
+        mostrada = ""
+        for letra in self.palabra:
+            if letra in self.letras_adivinadas:
+                mostrada += letra + " "
+            else:
+                mostrada += "_ "
+        return mostrada.strip()
+
+    def adivinar_letra(self, letra):
+        """
+        Verifica si una letra está en la palabra y la agrega a las letras adivinadas.
+
+        Args:
+            letra (str): La letra que el jugador intenta adivinar.
+
+        Returns:
+            bool: True si la letra está en la palabra, False en caso contrario.
+        """
+        letra = letra.lower()
+        if letra in self.palabra and letra not in self.letras_adivinadas:
+            self.letras_adivinadas.append(letra)
+            return True
+        return False
+
+    def ha_sido_adivinada(self):
+        """
+        Verifica si el jugador ha adivinado todas las letras de la palabra.
+
+        Returns:
+            bool: True si la palabra ha sido completamente adivinada, False en caso contrario.
+        """
+        return all(letra in self.letras_adivinadas for letra in self.palabra)
+
+
+class Juego:
+    """
+    Controla la lógica y el flujo del juego de adivinar palabras.
+
+    Atributos:
+        palabras (list): Una lista de palabras para el juego.
+        palabra_actual (Palabra): La palabra que se está adivinando actualmente.
+        intentos_restantes (int): El número de intentos que le quedan al jugador para la palabra actual.
+    """
+
+    def __init__(self, lista_palabras):
+        """
+        Inicializa un nuevo juego.
+
+        Args:
+            lista_palabras (list): La lista de palabras que se usarán en el juego.
+        """
+        self.palabras = lista_palabras
+        self.palabra_actual = None
+        self.intentos_restantes = 3
+
+    def siguiente_palabra(self):
+        """
+        Pasa a la siguiente palabra de la lista y reinicia los intentos.
+
+        Returns:
+            bool: True si hay una siguiente palabra, False si se han agotado las palabras.
+        """
+        if self.palabras:
+            palabra_str = random.choice(self.palabras)
+            self.palabras.remove(palabra_str)
+            self.palabra_actual = Palabra(palabra_str)
+            self.intentos_restantes = 3
+            return True
+        return False
+
+    def jugar(self):
+        """
+        Inicia y gestiona el bucle principal del juego.
+        """
+        print("¡Bienvenido al juego de adivinar palabras!")
+        
+        while self.siguiente_palabra():
+            print("\n" + "="*30)
+            print(f"Tienes {self.intentos_restantes} intentos para adivinar la siguiente palabra.")
+
+            while self.intentos_restantes > 0 and not self.palabra_actual.ha_sido_adivinada():
+                print(f"\nPalabra: {self.palabra_actual.mostrar_palabra()}")
+                intento = input("Adivina una letra: ").lower()
+
+                if len(intento) != 1 or not intento.isalpha():
+                    print("Por favor, introduce una única letra.")
+                    continue
+
+                if self.palabra_actual.adivinar_letra(intento):
+                    print("¡Bien hecho! Esa letra está en la palabra.")
+                else:
+                    self.intentos_restantes -= 1
+                    print(f"Incorrecto. Te quedan {self.intentos_restantes} intentos.")
+
+            if self.palabra_actual.ha_sido_adivinada():
+                print(f"\n¡Felicidades! Has adivinado la palabra: '{self.palabra_actual.palabra}'")
+            else:
+                print(f"\n¡Oh no! Se te acabaron los intentos. La palabra era '{self.palabra_actual.palabra}'.")
+
+        print("\n" + "="*30)
+        print("¡Juego terminado! Gracias por jugar.")
+
+
+# --- Iniciar el juego ---
+if __name__ == "__main__":
+    lista_de_palabras = ["python", "programacion", "objeto", "juego", "desarrollo"]
+    juego = Juego(lista_de_palabras)
+    juego.jugar()

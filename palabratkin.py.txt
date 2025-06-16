@@ -1,0 +1,203 @@
+import tkinter as tk
+ from tkinter import ttk, messagebox
+ import random
+ 
+
+ class Palabra:
+     """
+     Representa la palabra secreta que el jugador debe adivinar.
+ 
+
+     Atributos:
+         palabra (str): La palabra secreta.
+         letras_adivinadas (set): Un conjunto de las letras que el jugador ha adivinado correctamente.
+     """
+ 
+
+     def __init__(self, palabra):
+         """
+         Inicializa una nueva palabra secreta.
+ 
+
+         Args:
+             palabra (str): La palabra a adivinar.
+         """
+         self.palabra = palabra.lower()
+         self.letras_adivinadas = set()
+ 
+
+     def mostrar_palabra(self):
+         """
+         Muestra el estado actual de la palabra con letras adivinadas y guiones bajos.
+ 
+
+         Returns:
+             str: Una cadena que representa la palabra con las letras adivinadas.
+         """
+         mostrada = ""
+         for letra in self.palabra:
+             if letra in self.letras_adivinadas:
+                 mostrada += letra + " "
+             else:
+                 mostrada += "_ "
+         return mostrada.strip()
+ 
+
+     def adivinar_letra(self, letra):
+         """
+         Verifica si una letra está en la palabra y la agrega a las letras adivinadas.
+ 
+
+         Args:
+             letra (str): La letra que el jugador intenta adivinar.
+ 
+
+         Returns:
+             bool: True si la letra está en la palabra, False en caso contrario.
+         """
+         letra = letra.lower()
+         if letra in self.palabra and letra not in self.letras_adivinadas:
+             self.letras_adivinadas.add(letra)
+             return True
+         return False
+ 
+
+     def ha_sido_adivinada(self):
+         """
+         Verifica si el jugador ha adivinado todas las letras de la palabra.
+ 
+
+         Returns:
+             bool: True si la palabra ha sido completamente adivinada, False en caso contrario.
+         """
+         return all(letra in self.letras_adivinadas for letra in self.palabra)
+ 
+
+ 
+
+ class JuegoGUI:
+     """
+     Controla la lógica y la interfaz gráfica del juego de adivinar palabras.
+     """
+ 
+
+     def __init__(self, master, lista_palabras):
+         """
+         Inicializa la interfaz gráfica del juego.
+ 
+
+         Args:
+             master (tk.Tk): La ventana principal de la aplicación.
+             lista_palabras (list): La lista de palabras para el juego.
+         """
+         self.master = master
+         self.master.title("Juego de Adivinar Palabras")
+         self.palabras = lista_palabras
+         self.palabra_actual = None
+         self.intentos_restantes = 3
+ 
+
+         self.palabra_label = ttk.Label(master, text="", font=("Arial", 24))
+         self.palabra_label.pack(pady=20)
+ 
+
+         self.intentos_label = ttk.Label(master, text=f"Intentos restantes: {self.intentos_restantes}", font=("Arial", 12))
+         self.intentos_label.pack()
+ 
+
+         self.feedback_label = ttk.Label(master, text="", font=("Arial", 12, "italic"))
+         self.feedback_label.pack(pady=10)
+ 
+
+         self.guess_entry = ttk.Entry(master, width=5)
+         self.guess_entry.pack()
+ 
+
+         self.guess_button = ttk.Button(master, text="Adivinar", command=self.adivinar)
+         self.guess_button.pack(pady=10)
+         self.guess_entry.bind('<Return>', lambda event: self.adivinar()) # Bind Enter key
+ 
+
+         self.new_game_button = ttk.Button(master, text="Nueva Palabra", command=self.iniciar_nueva_palabra, state=tk.DISABLED)
+         self.new_game_button.pack(pady=10)
+ 
+
+         self.iniciar_nueva_palabra()
+ 
+
+     def iniciar_nueva_palabra(self):
+         """
+         Selecciona una nueva palabra y reinicia el estado del juego para esa palabra.
+         """
+         if not self.palabras:
+             self.palabra_label.config(text="¡Juego terminado!")
+             self.feedback_label.config(text="No quedan más palabras.")
+             self.guess_entry.config(state=tk.DISABLED)
+             self.guess_button.config(state=tk.DISABLED)
+             self.new_game_button.config(state=tk.DISABLED)
+             return
+ 
+
+         palabra_str = random.choice(self.palabras)
+         self.palabras.remove(palabra_str)
+         self.palabra_actual = Palabra(palabra_str)
+         self.intentos_restantes = 3
+         self.palabra_label.config(text=self.palabra_actual.mostrar_palabra())
+         self.intentos_label.config(text=f"Intentos restantes: {self.intentos_restantes}")
+         self.feedback_label.config(text="")
+         self.guess_entry.config(state=tk.NORMAL)
+         self.guess_entry.delete(0, tk.END)
+         self.guess_entry.focus_set()
+         self.guess_button.config(state=tk.NORMAL)
+         self.new_game_button.config(state=tk.DISABLED)
+ 
+
+     def adivinar(self):
+         """
+         Procesa el intento de adivinanza del jugador.
+         """
+         if not self.palabra_actual:
+             return
+ 
+
+         guess = self.guess_entry.get().lower()
+         self.guess_entry.delete(0, tk.END)
+ 
+
+         if not guess.isalpha() or len(guess) != 1:
+             self.feedback_label.config(text="Por favor, introduce una única letra.")
+             return
+ 
+
+         if guess in self.palabra_actual.letras_adivinadas:
+             self.feedback_label.config(text="Ya has adivinado esa letra.")
+             return
+ 
+
+         if self.palabra_actual.adivinar_letra(guess):
+             self.palabra_label.config(text=self.palabra_actual.mostrar_palabra())
+             self.feedback_label.config(text="¡Correcto!")
+             if self.palabra_actual.ha_sido_adivinada():
+                 self.feedback_label.config(text=f"¡Has adivinado la palabra: '{self.palabra_actual.palabra}'!")
+                 self.guess_entry.config(state=tk.DISABLED)
+                 self.guess_button.config(state=tk.DISABLED)
+                 self.new_game_button.config(state=tk.NORMAL)
+         else:
+             self.intentos_restantes -= 1
+             self.intentos_label.config(text=f"Intentos restantes: {self.intentos_restantes}")
+             self.feedback_label.config(text="Incorrecto.")
+             if self.intentos_restantes == 0:
+                 self.palabra_label.config(text=self.palabra_actual.palabra)
+                 self.feedback_label.config(text=f"¡Se acabaron los intentos! La palabra era '{self.palabra_actual.palabra}'.")
+                 self.guess_entry.config(state=tk.DISABLED)
+                 self.guess_button.config(state=tk.DISABLED)
+                 self.new_game_button.config(state=tk.NORMAL)
+ 
+
+ 
+
+ if __name__ == "__main__":
+     lista_de_palabras = ["python", "programacion", "objeto", "juego", "desarrollo", "interfaz", "grafica"]
+     root = tk.Tk()
+     game_gui = JuegoGUI(root, lista_de_palabras)
+     root.mainloop()
